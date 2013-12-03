@@ -24,21 +24,13 @@ import com.comcast.xfinity.sirius.api.SiriusConfiguration;
 import com.comcast.xfinity.sirius.api.impl.SiriusFactory;
 import com.comcast.xfinity.sirius.api.impl.SiriusImpl;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.ListIterator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-/**
- * Created By Core Application Platforms Comcast
- * User: mbyron200
- * Date: 11/7/13
- * <p/>
- * .
- */
 
 public class SiriusImplementation {
 
@@ -101,17 +93,58 @@ public class SiriusImplementation {
         return new RefRequestHandler();
     }
 
-    private static String createClusterConfig(String location, int port) {
+    /**
+     * Creates the cluster configuration from the location and port. If a node entry exist then the file is not updated
+     * however if the node entry is no in the file then the file is appended.
+     * @param location
+     * @param port
+     * @return absolute config path
+     */
+    public String createClusterConfig(String location, int port) {
         File membershipFile = new File(location, "cluster.conf");
         File dir =  new File(location);
         dir.mkdirs();
+        String clusterEntry = new String("akka://sirius-"+port+"@localhost:"+port+"/user/sirius");
+
         try {
+            if(membershipFile.exists()) {
+                FileReader fileReader = new FileReader(membershipFile);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                ArrayList<String> configList = new ArrayList();
+
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    configList.add(line);
+                }
+                bufferedReader.close();
+                fileReader.close();
+                logger.info("Reading cluster config "+ configList);
+                FileOutputStream fOS = new FileOutputStream(membershipFile,true);
+
+                ListIterator<String> iterator = configList.listIterator();
+                boolean present = false;
+                while(iterator.hasNext()) {
+                    if(iterator.next().equalsIgnoreCase(clusterEntry)){
+                        present = true;
+                    }
+                }
+                if(!present){
+                    logger.info("Writing cluster config "+clusterEntry);
+                    fOS.write((clusterEntry + "\n").getBytes());
+                }
+
+                fOS.flush();
+                fOS.close();
+                return membershipFile.getAbsolutePath();
+            }
+            logger.info("Creating new cluster config file "+membershipFile.getAbsolutePath());
             membershipFile.createNewFile();
             FileOutputStream fOS = new FileOutputStream(membershipFile);
-            fOS.write(("akka://sirius-"+port+"@localhost:"+port+"/user/sirius\n").getBytes());
+            logger.info("Writing cluster config "+clusterEntry);
+            fOS.write((clusterEntry + "\n").getBytes());
             fOS.close();
-        }catch(IOException ioe){
-
+        }catch(IOException e){
+            logger.info(e.getMessage());
         }
         return membershipFile.getAbsolutePath();
     }
@@ -122,14 +155,13 @@ public class SiriusImplementation {
           uberStoreDir.mkdirs();
         }
 
-        //File uberstoreFile = new File(uberStoreDir, UUID.randomUUID().toString());
         File uberstoreFile = new File(uberStoreDir,"sirius-42289");
-            uberstoreFile.mkdir();
+        uberstoreFile.mkdir();
+
         return uberstoreFile.getAbsolutePath();
     }
 
     private void isBooted(SiriusImpl siriusImpl , Long timeout){
-        System.out.println("Waiting for sirius to boot.");
         Long waitTime = System.currentTimeMillis() + timeout;
         final Long sleepTime = 5L;
         while (!siriusImpl.isOnline() && System.currentTimeMillis() < waitTime) {

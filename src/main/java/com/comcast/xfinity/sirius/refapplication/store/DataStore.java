@@ -19,10 +19,8 @@
 
 package com.comcast.xfinity.sirius.refapplication.store;
 
-import java.util.Map;
-
 /**
- * Generic Datastore interface
+ * Generic Data store interface
  */
 public interface DataStore {
 
