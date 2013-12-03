@@ -26,15 +26,7 @@ each other etc.
 
 
     public SiriusImpl startSirius(int port, String customWriteAheadLog){......}
-    /**
-    * Creates a SiriusImpl and waits until it has completed its bootstrap procedure and is online
-    *
-    * @param requestHandler An implemented RequestHandler that's required
-    * @param siriusLog Location on filesystem where the Sirius WAL will be found
-    * @param clusterConfig Location on the filesystem where Sirius cluster config will be found
-    * @param siriusPort port for Sirius to use to communicate with other cluster members
-    * @return a Sirius instance that is ready to start accepting requests
-    */
+    
     public SiriusImpl initializeSirius(RequestHandler requestHandler, String siriusLog, String clusterConfig,
                                   int siriusPort){
 
@@ -78,11 +70,7 @@ handleGet method.
     public FullRequestHandler(){
         logger = LoggerFactory.getLogger(this.getClass());
     }
-    /**
-     * HandleGet
-     * @param key
-     * @return SiriusResult
-     */
+    
     public SiriusResult handleGet(String key){
         logger.trace("Handling a Get for:", key);
         if (InMemoryDataStore.IMS.getContainer(key) != null){
@@ -94,12 +82,7 @@ handleGet method.
         }
     }
 
-    /**
-     * HandlePut
-     * @param key
-     * @param body
-     * @return SiriusResult
-     */
+   
     public SiriusResult handlePut(String key, byte[] body){
         logger.trace("Handling a PUT {}-size:{}", key, body);
 
@@ -114,11 +97,6 @@ handleGet method.
 
     }
 
-    /**
-     * handleDelete
-     * @param key
-     * @return SiriusResult
-     */
     public SiriusResult handleDelete(String key){......}
 
 
@@ -189,12 +167,7 @@ Starting the Server:
             ......
         }
         
-    /**
-     * Start the Reference Application Grizzly HTTP server.
-     * @return SelectorThread uses the Grizzly selector thread.
-     * @throws java.io.IOException if there is any error starting the server.
-     *
-     */
+    
     protected static SelectorThread startServer(int siriusPort, String siriusLog, URI BASE_URI) throws IOException {
         final Map<String, String> initParams = new HashMap<String, String>();
         initParams.put("com.sun.jersey.config.property.packages", "com.comcast.xfinity.sirius.refapplication.endpoints");
