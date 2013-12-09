@@ -50,16 +50,6 @@ each other etc.
         return siriusImpl;
     }
 
-    private static FullRequestHandler createRequestHandler(){......}
-
-    private static String createClusterConfig(String location, int port){......}
-
-    private static String createSiriusLog(String location){......}
-
-    private void isBooted(SiriusImpl siriusImpl , Long timeout){......}
-
-    public void shutdown(SiriusImpl siriusImpl){......}
-
 
 Implementing a RequestHandler: Here we are only interested in the handlePut and handleGet. When you 
 issure and enqueuePut the underlying Sirius library also fires the corrsponding RequestHandler’s handlePut
