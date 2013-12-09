@@ -99,7 +99,7 @@ handleGet method.
     public SiriusResult handleDelete(String key){......}
 
 
-Storing Data in Sirius:
+Storing Data in Sirius: Storing data in Sirius is simple. You can do an enqueueGet, enqueuePut or enqueueDelete.
 
     String container;
 
