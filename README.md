@@ -5,11 +5,10 @@ A simple reference application that helps developers get started with using the 
 Getting Started Tutorial
 
 This tutorial used code snippets from a simple application that uses the Sirius library to provide
-a simple desctributed, durable eventually consistent data store. We will first walk through the steps to write a Sirus powered application and then launch 2 nodes of
-a two node cluster.
+a simple destribute and consistent data store. We will first walk through the steps to write a Sirus powered application.
 
 When developeing with Sirius there are four blocks that you need. A Sirius representation, some class
-that configures what will be you Sirius Implimentation. A RequestHandler class that extends the Sirius
+that configures what will be your Sirius Implimentation. A RequestHandler class that extends the Sirius
 RequestHandle trait/interface, overrinding the handleGet, handlePut and handleDelete method. A controller
 class that determines when and what data gets written to or read from Sirius. And finally a implimentation
 of some in memory data store.
@@ -110,38 +109,18 @@ Storing Data in Sirius:
     
     @GET
     public Container getContainer(@QueryParam("search") String search)throws InterruptedException, ExecutionException {
-        logger.info("GET CONTAINER " + container + ", search = " + search);
+
         Future<SiriusResult> future = sirius.enqueueGet(container);
         SiriusResult result = future.get();
 
-        ......
-
-        Container c = (Container)result.getValue();
-
-        ......
-            return c;
-        }
-        return c;
+       
     }
 
     @PUT
     public Response putContainer()throws InterruptedException, ExecutionException {
-        logger.info("PUT CONTAINER " + container);
-        URI uri =  uriInfo.getAbsolutePath();
-        .......
-        Container c = new Container(container, uri.toString());
-
-        Response r;
-        if (!InMemoryDataStore.IMS.hasContainer(c.getName())) {
-            r = Response.created(uri).build();
-            byte[] bytes = c.serialize();
-            Future < SiriusResult > future = sirius.enqueuePut(c.getName(), bytes);
-            future.get();
-        } else {
-            r = Response.noContent().build();
-
-        }
-        return r;
+    
+        Future < SiriusResult > future = sirius.enqueuePut(c.getName(), bytes);
+        future.get();
     }
     ......
     ......
