@@ -16,40 +16,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.comcast.xfinity.sirius</groupId>
-    <version>0.1.1</version>
+    <version>1.0</version>
     <artifactId>sirius-reference-app</artifactId>
     <name>Sirius Reference Application</name>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    <profiles>
-        <profile>
-            <id>jdk-1.6</id>
-            <activation>
-                <jdk>1.6</jdk>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>com.sun.xml.bind</groupId>
-                    <artifactId>jaxb-impl</artifactId>
-                    <version>2.1</version>
-                </dependency>
-                <dependency>
-                  <groupId>com.comcast.xfinity</groupId>
-                  <artifactId>sirius</artifactId>
-                  <version>1.1.2</version>
-                  <exclusions>
-                      <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-api</artifactId>
-                      </exclusion>
-                  </exclusions>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
     <dependencies>
+        <dependency>
+            <groupId>com.comcast.xfinity</groupId>
+            <artifactId>sirius</artifactId>
+            <version>1.2.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
@@ -72,15 +57,17 @@
             <version>1.0</version>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-api</artifactId>
           <version>1.7.5</version>
         </dependency>
+        -->
         <dependency>
-        	<groupId>org.slf4j</groupId>
-        	<artifactId>slf4j-simple</artifactId>
-        	<version>1.7.5</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.5</version>
         </dependency>
     </dependencies>
     <build>
@@ -111,26 +98,14 @@
                </configuration>
            </plugin>
            <plugin>
-               <artifactId>maven-assembly-plugin</artifactId>
-               <configuration>
-                   <descriptors>
-                       <descriptor>src/main/assembly/src.xml</descriptor>
-                   </descriptors>
-                   <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                   </descriptorRefs>
-                   <archive>
-                       <manifest>
-                            <mainClass>com.comcast.xfinity.sirius.refapplication.StartServer</mainClass>
-                       </manifest>
-                   </archive>
-               </configuration>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-dependency-plugin</artifactId>
                <executions>
                    <execution>
-                       <id>make-assembly</id>
+                       <id>copy-for-start-script</id>
                        <phase>package</phase>
                        <goals>
-                           <goal>attached</goal>
+                           <goal>copy-dependencies</goal>
                        </goals>
                    </execution>
                </executions>
