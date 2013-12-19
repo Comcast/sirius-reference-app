@@ -21,7 +21,7 @@ each other etc.
 
 
 Implementing a RequestHandler: Here we are only interested in the handlePut and handleGet. When you 
-issure and enqueuePut the underlying Sirius library also fires the corrsponding RequestHandler’s handlePut
+issue an enqueuePut the underlying Sirius library also fires the corresponding RequestHandler’s handlePut
 method. when you issue an enqueueGet the Sirius library then fires the corresponding RequestHandler’s 
 handleGet method.
 
