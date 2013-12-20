@@ -36,21 +36,30 @@ public class SiriusImplementation {
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-    public SiriusImpl startSirius(int port, String customWriteAheadLog){
+    public SiriusImpl startSirius(int port, String customWriteAheadLog, String akkaExternalConfig) throws Exception{
         if(customWriteAheadLog != null){
             if(!customWriteAheadLog.isEmpty()){
-                defaultWriteAheadLog = createSiriusLog(customWriteAheadLog);
-                clusterConfig = createClusterConfig("config/",port);
+                defaultWriteAheadLog = createSiriusLog(customWriteAheadLog,port);
+                clusterConfig = createClusterConfig("resources/config/",port);
                 requestHandler = createRequestHandler();
                 return new SiriusImplementation().initializeSirius(requestHandler, defaultWriteAheadLog,
-                                                clusterConfig, port);
+                                                clusterConfig, port, akkaExternalConfig);
             }
         }
-        defaultWriteAheadLog = createSiriusLog("uberStore/");
-        clusterConfig = createClusterConfig("config/",port);
+        defaultWriteAheadLog = createSiriusLog("resources/uberStore/",port);
+        clusterConfig = createClusterConfig("resources/config/",port);
         requestHandler = createRequestHandler();
-
-        return new SiriusImplementation().initializeSirius(requestHandler, defaultWriteAheadLog, clusterConfig,port);
+        SiriusImpl siriusImp;
+        try{
+            siriusImp = new SiriusImplementation().initializeSirius(requestHandler, defaultWriteAheadLog, clusterConfig, port, akkaExternalConfig);
+            logger.info( "Firing up Sirius on :" + port);
+            return siriusImp;
+        }catch (Exception e){
+            copyAkkaReferenceConfig();
+            siriusImp = new SiriusImplementation().initializeSirius(requestHandler, defaultWriteAheadLog, clusterConfig, port, akkaExternalConfig);
+            logger.info( "Firing up Sirius on :" + port);
+        }
+        return siriusImp;
     }
     /**
     * Creates a SiriusImpl and waits until it has completed its bootstrap procedure and is online
@@ -62,7 +71,7 @@ public class SiriusImplementation {
     * @return a Sirius instance that is ready to start accepting requests
     */
     public SiriusImpl initializeSirius(RequestHandler requestHandler, String siriusLog, String clusterConfig,
-                                  int siriusPort){
+                                  int siriusPort, String akkaExternalConfig) throws Exception{
 
         String localHost = "localhost";
 
@@ -76,12 +85,10 @@ public class SiriusImplementation {
         siriusConfig.setProp(SiriusConfiguration.REPROPOSAL_WINDOW(), 10);
         siriusConfig.setProp(SiriusConfiguration.LOG_REQUEST_CHUNK_SIZE(), 100);
         siriusConfig.setProp(SiriusConfiguration.LOG_LOCATION(), siriusLog);
-
-
-        logger.info( "Firing up Sirius on " + localHost + ":" + siriusPort);
+        siriusConfig.setProp(SiriusConfiguration.AKKA_EXTERN_CONFIG(),akkaExternalConfig);
 
         SiriusImpl siriusImpl = SiriusFactory.createInstance(requestHandler, siriusConfig);
-        isBooted(siriusImpl, 60000L);
+        awaitBoot(siriusImpl, 60000L);
         return siriusImpl;
     }
 
@@ -145,33 +152,67 @@ public class SiriusImplementation {
         return membershipFile.getAbsolutePath();
     }
 
-    private static String createSiriusLog(String location){
+    /**
+     *
+     * @param
+     */
+    private void copyAkkaReferenceConfig(){
+        File akkaConfigFile = new File("resources/config/application.conf");
+
+        try{
+            GenerateReferenceConfig.createReferenceConfig(akkaConfigFile);
+        }catch(Exception e){
+            logger.debug(e.getMessage());
+        }
+
+    }
+    /**
+     *
+     * @param location
+     * @param port
+     * @return
+     */
+    private static String createSiriusLog(String location, int port){
         File uberStoreDir = new File(location);
         if (!uberStoreDir.exists()) {
           uberStoreDir.mkdirs();
         }
 
-        File uberstoreFile = new File(uberStoreDir,"sirius-42289");
+        File uberstoreFile = new File(uberStoreDir,"sirius-"+port);
         uberstoreFile.mkdir();
 
         return uberstoreFile.getAbsolutePath();
     }
 
-    private void isBooted(SiriusImpl siriusImpl , Long timeout){
-        Long waitTime = System.currentTimeMillis() + timeout;
-        final Long sleepTime = 5L;
-        while (!siriusImpl.isOnline() && System.currentTimeMillis() < waitTime) {
-          try {
-            logger.info("Waiting for sirius to boot.");
-            Thread.sleep(sleepTime);
-          }catch(InterruptedException ie) {
-            logger.info("Failed while waiting for sirius to boot.");
-          }
+    /**
+     * Awaits for siriusImpl to come online, or throws an IllegalStateException if it fails
+     * to come up within the provided timeout.
+     *
+     * Static for testing
+     *
+     * @param siriusImpl
+     * @param timeout
+     * @throws InterruptedException
+     */
+     public void awaitBoot(SiriusImpl siriusImpl, long timeout) throws InterruptedException {
+        long waitUntil = System.currentTimeMillis() + timeout;
+        while (System.currentTimeMillis() < waitUntil) {
+            if (siriusImpl.isOnline()) {
+                break;
+            } else {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    logger.warn("Sleep interrupted while waiting for Sirius to boot... " +
+                                " putting my head in the sand for now.");
+                }
+            }
         }
-        if (!siriusImpl.isOnline() ) {
+
+        if (!siriusImpl.isOnline()) {
             throw new IllegalStateException("Sirius failed to boot in " + timeout + "ms");
         }
-      }
+    }
 
     public void shutdown(SiriusImpl siriusImpl){
         siriusImpl.shutdown();

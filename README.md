@@ -15,16 +15,16 @@ of some in memory data store.
 
 Configuring Sirius: Here we configure what the cluster will look like, how many, how often they message
 each other etc.
-
+    ```java
     public SiriusImpl initializeSirius(RequestHandler requestHandler,
     		String siriusLog, String clusterConfig, int siriusPort){
-
+    ```
 
 Implementing a RequestHandler: Here we are only interested in the handlePut and handleGet. When you 
 issue an enqueuePut the underlying Sirius library also fires the corresponding RequestHandler’s handlePut
 method. when you issue an enqueueGet the Sirius library then fires the corresponding RequestHandler’s 
 handleGet method.
-
+   ```java
     public SiriusResult handleGet(String key)
     	map.get(key)
     public SiriusResult handlePut(String key, byte[] data)
@@ -49,38 +49,50 @@ handleGet method.
     }
 
     public SiriusResult handleDelete(String key){......}
-
+   ```
 
 Storing Data in Sirius: Storing data in Sirius is simple. You can do an enqueueGet, enqueuePut or enqueueDelete.
-
+    ```java
     Future <SiriusResult> future = sirius.enqueuePut(key, bytes)
     Future <SiriusResult> future = sirius.enqueueGet(key)
-
+    ```
 
 Run the example as follows
 
 Default Server port is 	9998
-mvn clean compile exec:java
+```
+    mvn clean compile exec:java
+```
+Or
+```
+    mvn clean package
+    cd target
+    java -jar sirius-reference-app-0.1.1-jar-with-dependencies.jar
+```
 
 Access the application WADL
-curl http://localhost:9998/storage/application.wadl
-
+```
+    curl http://localhost:9998/storage/application.wadl
+```
 Get the high level keys in the data store
-curl http://localhost:9998/storage/repository
-
+```
+    curl http://localhost:9998/storage/repository
+```
 Add a Key
-curl -X PUT http://localhost:9998/storage/repository/Stations
-
+```
+    curl -X PUT http://localhost:9998/storage/repository/Stations
+```
 Add some content
-curl -X PUT -HContent-type:text/plain --data "Six Feet Under"  http://127.0.0.1:9998/storage/repository/Stations/HBO
+```
+    curl -X PUT -HContent-type:text/plain --data "Six Feet Under"  http://127.0.0.1:9998/storage/repository/Stations/HBO
+```
 
 The mapping of the URI path space is presented in the following table:
-/storage
-	Resource Class = RepositoryController
-	HTTP Methods = GET
-/storage/repository/
-	Resource Class = ContainerController
-	HTTP Methods = GET, PUT, DELETE
-/storage/repository/{container}
-	Resource Class = ContainerController
-	HTTP Methods = GET, PUT, DELETE
+| URL                           | Resource Class                        | HTTP Methods
+|-------------------------------|:-------------------------------------:|-----------------:|
+|/storage                       | Resource Class = RepositoryController | GET              |
+|                               |                                       |                  |
+|/storage/repository/           |/storage/repository/                   | GET, PUT, DELETE |
+|                               |                                       |                  |
+|/storage/repository/{container}| ContainerController                   | GET, PUT, DELETE |
+|
