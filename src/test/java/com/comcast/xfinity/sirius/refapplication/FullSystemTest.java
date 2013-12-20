@@ -33,11 +33,15 @@ public class FullSystemTest extends BaseTest{
     private static SiriusImpl SIRIUS_3;
     private static Client client;
     private static WebResource webResource;
-    private static String CUSTOM_WRITE_AHEAD_LOG = "uberStore/";
-
+    private final static String CUSTOM_WRITE_AHEAD_LOG = "resources/uberStore/";
+    public final static String AKKA_EXTERNAL_CONFIG = "resources/config/application.conf";
+    public final static String RESOURCE_FOLDER = "resources";
 
     @BeforeClass
     public static void oneTimeSetUp()throws Exception {
+        File resourceFolder =  new File(RESOURCE_FOLDER);
+        recursiveDelete(resourceFolder);
+
         int CUSTOM_SERVER_PORT_1 = 9997;
         int CUSTOM_SIRIUS_PORT_1 = 42289;
         URI CUSTOM_BASE_URI_1 = UriBuilder.fromUri("http://localhost/storage").port(CUSTOM_SERVER_PORT_1).build();
@@ -52,13 +56,13 @@ public class FullSystemTest extends BaseTest{
 
         client = Client.create();
         webResource = client.resource(CUSTOM_BASE_URI_1);
-        selectorThread_1 = StartServer.startServer(CUSTOM_SIRIUS_PORT_1, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_1);
+        selectorThread_1 = StartServer.startServer(CUSTOM_SIRIUS_PORT_1, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_1,AKKA_EXTERNAL_CONFIG);
         SIRIUS_1 = StartServer.SIRIUS;
         System.out.println(SIRIUS_1);
-        selectorThread_2 = StartServer.startServer(CUSTOM_SIRIUS_PORT_2, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_2);
+        selectorThread_2 = StartServer.startServer(CUSTOM_SIRIUS_PORT_2, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_2,AKKA_EXTERNAL_CONFIG);
         SIRIUS_2 = StartServer.SIRIUS;
         System.out.println(SIRIUS_2);
-        selectorThread_3 = StartServer.startServer(CUSTOM_SIRIUS_PORT_3, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_3);
+        selectorThread_3 = StartServer.startServer(CUSTOM_SIRIUS_PORT_3, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI_3,AKKA_EXTERNAL_CONFIG);
         SIRIUS_3 = StartServer.SIRIUS;
         System.out.println(SIRIUS_3);
         System.out.println("@BeforeClass - oneTimeSetUp");
@@ -137,8 +141,8 @@ public class FullSystemTest extends BaseTest{
         selectorThread_2.stopEndpoint();
         selectorThread_3.stopEndpoint();
         StartServer.SIRIUS.shutdown();
-        File uberStore =  new File(CUSTOM_WRITE_AHEAD_LOG);
-        recursiveDelete(uberStore);
+        File resourceFolder =  new File(RESOURCE_FOLDER);
+        recursiveDelete(resourceFolder);
         System.out.println("@AfterClass - oneTimeTearDown");
     }
 

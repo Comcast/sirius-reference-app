@@ -116,6 +116,14 @@
                    <descriptors>
                        <descriptor>src/main/assembly/src.xml</descriptor>
                    </descriptors>
+                   <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                   </descriptorRefs>
+                   <archive>
+                       <manifest>
+                            <mainClass>com.comcast.xfinity.sirius.refapplication.StartServer</mainClass>
+                       </manifest>
+                   </archive>
                </configuration>
                <executions>
                    <execution>

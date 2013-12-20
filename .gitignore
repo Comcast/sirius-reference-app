@@ -14,6 +14,7 @@ doc/sirius.aux
 doc/sirius.log
 atlassian-ide-plugin.xml
 uberStore
+resources
 .clover/
 .DS_Store
 *~
