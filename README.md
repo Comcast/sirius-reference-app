@@ -88,6 +88,8 @@ Add some content
 ```
 
 The mapping of the URI path space is presented in the following table:
+
+
 | URL                           | Resource Class                        | HTTP Methods
 |-------------------------------|:-------------------------------------:|-----------------:|
 |/storage                       | Resource Class = RepositoryController | GET              |
