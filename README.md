@@ -95,4 +95,3 @@ The mapping of the URI path space is presented in the following table:
 |/storage/repository/           |/storage/repository/                   | GET, PUT, DELETE |
 |                               |                                       |                  |
 |/storage/repository/{container}| ContainerController                   | GET, PUT, DELETE |
-|
