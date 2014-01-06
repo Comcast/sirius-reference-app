@@ -95,19 +95,11 @@ public class RefAppConfigurator {
     }
 
     /**
-     * Start an instance of Sirius. Will wait a maximum of 60 seconds to boot. Make this configurable
-     * if you're going to have a lot of data in here.
+     * Using the properties passed in, construct a SiriusConfig to send to the SiriusFactory.
      *
-     * @return SiriusImpl ready to use
+     * @return SiriusConfiguration with required properties
      */
-    public SiriusImpl startSirius() {
-        SiriusImpl siriusImpl = SiriusFactory.createInstance(new DefaultRequestHandler(), buildSiriusConfig());
-        awaitBoot(siriusImpl, 60000L);
-
-        return siriusImpl;
-    }
-
-    private SiriusConfiguration buildSiriusConfig() {
+    public SiriusConfiguration buildSiriusConfig() {
         SiriusConfiguration siriusConfig = new SiriusConfiguration();
         siriusConfig.setProp(SiriusConfiguration.HOST(), siriusHostName);
         siriusConfig.setProp(SiriusConfiguration.PORT(), siriusPort);
@@ -118,31 +110,4 @@ public class RefAppConfigurator {
         return siriusConfig;
     }
 
-    /**
-     * Wait for Sirius to bootstrap. This includes replaying the entire WAL.
-     *
-     * @param siriusImpl sirius instance to test
-     * @param timeout how long you're willing to wait for Sirius to boot
-     */
-    private static void awaitBoot(SiriusImpl siriusImpl, Long timeout) {
-        System.out.println("Waiting for sirius to boot.");
-        Long waitTime = System.currentTimeMillis() + timeout;
-        Long sleepTime = 100L;
-        while (!siriusImpl.isOnline() && System.currentTimeMillis() < waitTime) {
-            try {
-                Thread.sleep(sleepTime);
-            } catch (InterruptedException e) {
-                // we're the only ones here, nobody's going to interrupt us.
-                // and if it does happen, well, just keep waiting for sirius to start anyway.
-            }
-        }
-
-        if (!siriusImpl.isOnline() ) {
-            throw new IllegalStateException("Sirius failed to boot in " + timeout + "ms");
-        }
-      }
-
-    public void stopSirius(SiriusImpl siriusImpl){
-        siriusImpl.shutdown();
-    }
 }
