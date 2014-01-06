@@ -21,3 +21,4 @@ resources
 .pydevproject
 *.pyc
 *.dvi
+example/sirius/uberstore
