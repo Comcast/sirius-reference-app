@@ -100,6 +100,11 @@ public class RefAppConfigurator {
      * @return SiriusConfiguration with required properties
      */
     public SiriusConfiguration buildSiriusConfig() {
+        File uberstore = new File(uberStoreLocation);
+        if (!uberstore.exists()) {
+            uberstore.mkdirs();
+        }
+
         SiriusConfiguration siriusConfig = new SiriusConfiguration();
         siriusConfig.setProp(SiriusConfiguration.HOST(), siriusHostName);
         siriusConfig.setProp(SiriusConfiguration.PORT(), siriusPort);
