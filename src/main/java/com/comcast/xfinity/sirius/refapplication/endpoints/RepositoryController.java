@@ -16,7 +16,6 @@
 package com.comcast.xfinity.sirius.refapplication.endpoints;
 
 import com.comcast.xfinity.sirius.api.SiriusResult;
-import com.comcast.xfinity.sirius.api.impl.status.NodeStats;
 import com.comcast.xfinity.sirius.refapplication.RefAppState;
 
 import javax.ws.rs.*;
@@ -25,34 +24,8 @@ import javax.ws.rs.core.Response;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-
-@Path("/")
+@Path("/storage")
 public class RepositoryController {
-
-    /**
-     * Dump of Sirius status. Both node configuration and runtime statistics appear
-     * here.
-     *
-     * @return text/plain response, dump of full node status
-     * @throws Exception
-     */
-    @GET
-    @Path("sirius-status")
-    public Response getStatus() throws Exception {
-        NodeStats.FullNodeStatus siriusStatus = RefAppState.sirius.getStatus().get(5, TimeUnit.SECONDS);
-
-        return Response.ok(siriusStatus.toString(), MediaType.TEXT_PLAIN_TYPE).build();
-    }
-
-    @GET
-    @Path("keys")
-    public Response getKeys() throws Exception {
-        StringBuilder response = new StringBuilder();
-        for (String key : RefAppState.repository.keys()) {
-            response.append(key).append("\n");
-        }
-        return Response.ok(response.toString()).build();
-    }
 
     @GET
     @Path("{key: .+}")
