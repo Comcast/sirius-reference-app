@@ -15,28 +15,29 @@
  */
 package com.comcast.xfinity.sirius.refapplication.store;
 
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
-import javax.xml.bind.JAXBContext;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Provider
-public final class JAXBContextResolver implements ContextResolver<JAXBContext> {
+/**
+ * Simple thread-safe repository. Store and retrieve values.
+ */
+public class KVRepository {
+    Map<String, String> backend = new ConcurrentHashMap<String, String>();
 
-    private final JAXBContext context;
-
-    private final Set<Class> types;
-
-    private final Class[] cTypes = {Repository.class, Container.class};
-
-    public JAXBContextResolver() throws Exception {
-        this.types = new HashSet(Arrays.asList(cTypes));
-        this.context = JAXBContext.newInstance(cTypes);
+    public String get(String key) {
+        return backend.get(key);
     }
 
-    public JAXBContext getContext(Class<?> objectType) {
-        return (types.contains(objectType)) ? context : null;
+    public void put(String key, String body) {
+        backend.put(key, body);
+    }
+
+    public void delete(String key) {
+        backend.remove(key);
+    }
+
+    public Set<String> keys() {
+        return backend.keySet();
     }
 }

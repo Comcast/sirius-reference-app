@@ -15,95 +15,98 @@
  */
 package com.comcast.xfinity.sirius.refapplication;
 
+import com.comcast.xfinity.sirius.api.impl.SiriusFactory;
 import com.comcast.xfinity.sirius.api.impl.SiriusImpl;
-import com.comcast.xfinity.sirius.refapplication.sirius.SiriusImplementation;
+import com.comcast.xfinity.sirius.refapplication.config.RefAppConfigurator;
+import com.comcast.xfinity.sirius.refapplication.sirius.DefaultRequestHandler;
+import com.comcast.xfinity.sirius.refapplication.store.KVRepository;
 import com.sun.grizzly.http.SelectorThread;
 import com.sun.jersey.api.container.grizzly.GrizzlyWebContainerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
-import javax.ws.rs.core.UriBuilder;
 
 public class StartServer {
-    protected static Logger logger = LoggerFactory.getLogger(StartServer.class);
-    public static final  int DEFAULT_SERVER_PORT = 9998;
-    public static final  int DEFAULT_SIRIUS_PORT = 42289;
-    public static final URI BASE_URI = UriBuilder.fromUri("http://localhost/storage").port(DEFAULT_SERVER_PORT).build();
-    public static int CUSTOM_SERVER_PORT;
-    public static int CUSTOM_SIRIUS_PORT;
-    public static URI CUSTOM_BASE_URI;
-    public static String CUSTOM_WRITE_AHEAD_LOG;
-    public static String AKKA_EXTERNAL_CONFIG = "resources/config/application.conf";
-    public static  SiriusImpl SIRIUS;
 
     public static void main(String[] args) throws Exception {
-        if(args.length == 0 ){
-            SelectorThread threadSelector = startServer(DEFAULT_SIRIUS_PORT, null, BASE_URI, AKKA_EXTERNAL_CONFIG);
-            logger.info("Jersey app started with WADL available at {}/application.wadl", BASE_URI);
-
-            System.out.println("Hit return to stop...");
-            System.in.read();
-
-            threadSelector.stopEndpoint();
-            SIRIUS.shutdown();
-            System.exit(0);
-        }else{
-            if (args.length > 2){
-                throw new IllegalArgumentException("Too many arguments");
-            } else{
-                boolean containsValidArgs = false;
-                for(int i = 0 ; i < args.length; i++){
-                    if(args[i].contains("siriusport")){
-                        CUSTOM_SIRIUS_PORT = Integer.parseInt(args[i].split("=")[1]);
-                        containsValidArgs = true;
-                    }
-                    if(args[i].contains("serverport")){
-                        CUSTOM_SERVER_PORT = Integer.parseInt(args[i].split("=")[1]);
-                        containsValidArgs = true;
-                    }
-                    if(!containsValidArgs){
-                        throw new IllegalArgumentException("Not a valid arguments: Usage should be " +
-                                                                        "[StartServer siriusport=[port] serverport=[port]");
-                    }
-                }
-            }
+        if (args.length != 1) {
+            usage();
         }
-            CUSTOM_BASE_URI = UriBuilder.fromUri("http://localhost/storage").port(CUSTOM_SERVER_PORT).build();
-            SelectorThread threadSelector = startServer(CUSTOM_SIRIUS_PORT, CUSTOM_WRITE_AHEAD_LOG, CUSTOM_BASE_URI,AKKA_EXTERNAL_CONFIG);
-            logger.info("Jersey app started with WADL available at {}/application.wadl", CUSTOM_BASE_URI);
 
-            System.out.println("Hit return to stop...");
-            System.in.read();
+        RefAppConfigurator configurator = new RefAppConfigurator(args[0]);
 
-            threadSelector.stopEndpoint();
-            SIRIUS.shutdown();
-            System.exit(0);
+        RefAppState.repository = new KVRepository();
+        RefAppState.sirius = startSirius(configurator);
+
+        runServer(configurator);
+
+        stopSirius(RefAppState.sirius);
+        System.exit(0);
     }
 
+    public static void usage() {
+        throw new IllegalArgumentException("Usage:\n StartServer [config-location]");
+    }
+
+    private static void runServer(RefAppConfigurator configurator) throws IOException {
+        URI baseUri = UriBuilder.fromUri("http://localhost/").port(configurator.getServerPort()).build();
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("com.sun.jersey.config.property.packages", "com.comcast.xfinity.sirius.refapplication.endpoints");
+
+        SelectorThread thread = GrizzlyWebContainerFactory.create(baseUri, params);
+
+        System.out.println();
+        System.out.println("Server fired up, using akka over TCP. Akka address for this server:");
+        System.out.println(configurator.getAkkaPath());
+        System.out.println("Hit enter to stop server...");
+        System.in.read();
+
+        thread.stopEndpoint();
+    }
 
     /**
+     * Start an instance of Sirius. Will wait a maximum of 60 seconds to boot. Make this configurable
+     * if you're going to have a lot of data in here.
      *
-     * @param siriusPort
-     * @param siriusLog
-     * @param BASE_URI
-     * Start the Reference Application Grizzly HTTP server.
-     * @return SelectorThread uses the Grizzly selector thread.
-     * @throws Exception if there is any error starting the server.
+     * @return SiriusImpl ready to use
      */
-    protected static SelectorThread startServer(int siriusPort, String siriusLog, URI BASE_URI, String akkaExternalConfig) throws Exception {
-        final Map<String, String> initParams = new HashMap<String, String>();
-        initParams.put("com.sun.jersey.config.property.packages", "com.comcast.xfinity.sirius.refapplication.endpoints");
+    public static SiriusImpl startSirius(RefAppConfigurator refAppConfigurator) {
+        SiriusImpl siriusImpl = SiriusFactory.createInstance(new DefaultRequestHandler(), refAppConfigurator.buildSiriusConfig());
+        awaitBoot(siriusImpl, 60000L);
 
-        SIRIUS = new SiriusImplementation().startSirius(siriusPort, siriusLog, akkaExternalConfig);
-
-        logger.info("Starting Service with the Jersey Java reference container");
-        SelectorThread threadSelector = GrizzlyWebContainerFactory.create(BASE_URI, initParams);
-        return threadSelector;
+        return siriusImpl;
     }
 
+    /**
+     * Wait for Sirius to bootstrap. This includes replaying the entire WAL.
+     *
+     * @param siriusImpl sirius instance to test
+     * @param timeout how long you're willing to wait for Sirius to boot
+     */
+    private static void awaitBoot(SiriusImpl siriusImpl, Long timeout) {
+        System.out.println("Waiting for sirius to boot.");
+        Long waitTime = System.currentTimeMillis() + timeout;
+        Long sleepTime = 100L;
+        while (!siriusImpl.isOnline() && System.currentTimeMillis() < waitTime) {
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                // we're the only ones here, nobody's going to interrupt us.
+                // and if it does happen, well, just keep waiting for sirius to start anyway.
+            }
+        }
+
+        if (!siriusImpl.isOnline() ) {
+            throw new IllegalStateException("Sirius failed to boot in " + timeout + "ms");
+        }
+    }
+
+    public static void stopSirius(SiriusImpl siriusImpl){
+        siriusImpl.shutdown();
+    }
 }
+

@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.xfinity.sirius.refapplication.store;
+package com.comcast.xfinity.sirius.refapplication;
 
-/**
- * Generic Data store interface
- */
-public interface DataStore {
+import com.comcast.xfinity.sirius.api.impl.SiriusImpl;
+import com.comcast.xfinity.sirius.refapplication.store.KVRepository;
 
-    Container createContainer(Container container);
-    Container getContainer(String container);
-    Container deleteContainer(String container);
-
-    String getData(String container, String key);
+public final class RefAppState {
+    public static SiriusImpl sirius;
+    public static KVRepository repository;
 }

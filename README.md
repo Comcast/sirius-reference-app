@@ -1,8 +1,72 @@
 Sirius-Reference-App
+======
+
 A simple reference application that helps developers get started with using the Sirius library
 
 
+Basic interaction with the sample app
+======
+
+This section describes firing up and playing with the sample app in single-node, non-distributed
+mode. We'll describe more interesting setups later.
+
+Build and run the application. Default server port is 8000. See contents of config.properties (or the PSF
+definitions in RefAppConfigurator.java) for available parameters.
+```
+    mvn clean package
+    ./start.sh example/config.properties
+```
+
+Add some content:
+```
+    curl -vX PUT -HContent-type:text/plain --data "Six Feet Under"  http://127.0.0.1:8000/storage/series/12345
+    curl -vX PUT -HContent-type:text/plain --data "The Wire"  http://127.0.0.1:8000/storage/series/45678
+```
+
+See the keys you've added:
+```
+    curl http://127.0.0.1:8000/keys
+```
+
+Get content back out:
+```
+    curl http://127.0.0.1:8000/storage/series/12345
+```
+
+Delete a k:v pair:
+```
+    curl -vX DELETE http://127.0.0.1:8000/storage/series/45678
+```
+
+See the remaining keys:
+```
+    curl http://127.0.0.1:8000/keys
+```
+
+Available URI paths:
+
+| URL                           | Resource Class                        | HTTP Methods
+|-------------------------------|:-------------------------------------:|-----------------:|
+|/keys                          | StatusController                      | GET              |
+|                               |                                       |                  |
+|/test                          | StatusController                      | GET              |
+|                               |                                       |                  |
+|/sirius-status                 | StatusController                      | GET              |
+|                               |                                       |                  |
+|/storage/{.+ }                 | RepositoryController                  | GET, PUT, DELETE |
+
+Sample app as a local cluster
+======
+Three-node cluster, spun up on a single machine.
+TODO
+
+Sample app as a remote cluster
+======
+Three-node cluster, spun up on three machines.
+TODO
+
 Getting Started Tutorial
+======
 
 This tutorial used code snippets from a simple application that uses the Sirius library to provide
 a simple distribute and consistent data store. We will first walk through the steps to write a Sirius powered application.
@@ -20,9 +84,9 @@ each other etc.
     		String siriusLog, String clusterConfig, int siriusPort){
     ```
 
-Implementing a RequestHandler: Here we are only interested in the handlePut and handleGet. When you 
+Implementing a RequestHandler: Here we are only interested in the handlePut and handleGet. When you
 issue an enqueuePut the underlying Sirius library also fires the corresponding RequestHandler’s handlePut
-method. when you issue an enqueueGet the Sirius library then fires the corresponding RequestHandler’s 
+method. when you issue an enqueueGet the Sirius library then fires the corresponding RequestHandler’s
 handleGet method.
    ```java
     public SiriusResult handleGet(String key)
@@ -33,7 +97,7 @@ handleGet method.
     	map.remove(key)
 
 
-   
+
     public SiriusResult handlePut(String key, byte[] body){
         logger.trace("Handling a PUT {}-size:{}", key, body);
 
@@ -57,43 +121,3 @@ Storing Data in Sirius: Storing data in Sirius is simple. You can do an enqueueG
     Future <SiriusResult> future = sirius.enqueueGet(key)
     ```
 
-Run the example as follows
-
-Default Server port is 	9998
-```
-    mvn clean compile exec:java
-```
-Or
-```
-    mvn clean package
-    cd target
-    java -jar sirius-reference-app-0.1.1-jar-with-dependencies.jar
-```
-
-Access the application WADL
-```
-    curl http://localhost:9998/storage/application.wadl
-```
-Get the high level keys in the data store
-```
-    curl http://localhost:9998/storage/repository
-```
-Add a Key
-```
-    curl -X PUT http://localhost:9998/storage/repository/Stations
-```
-Add some content
-```
-    curl -X PUT -HContent-type:text/plain --data "Six Feet Under"  http://127.0.0.1:9998/storage/repository/Stations/HBO
-```
-
-The mapping of the URI path space is presented in the following table:
-
-
-| URL                           | Resource Class                        | HTTP Methods
-|-------------------------------|:-------------------------------------:|-----------------:|
-|/storage                       | RepositoryController                  | GET              |
-|                               |                                       |                  |
-|/storage/repository/           | ContainerController                   | GET, PUT, DELETE |
-|                               |                                       |                  |
-|/storage/repository/{container}| ContainerController                   | GET, PUT, DELETE |
