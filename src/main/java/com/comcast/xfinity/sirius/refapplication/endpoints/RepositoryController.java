@@ -40,20 +40,18 @@ public class RepositoryController {
     }
 
     /**
-     * PUT an entry. Returns immediately, does not wait for the result. If you
-     * want this to block, expose any errors found, and return a more accurate result,
-     * see deleteEntry() below.
+     * PUT an value for a key. Awaits the result of the PUT.
      *
      * @param key key of PUT, from the url path
      * @param data body of PUT
-     * @return 202 Accepted in all cases.
+     * @return 200 OK if successful, 500 otherwise.
      */
     @PUT
     @Path("{key: .+}")
-    public Response putEntry(@PathParam("key") String key, String data) {
-        RefAppState.sirius.enqueuePut(key, data.getBytes());
+    public Response putEntry(@PathParam("key") String key, String data) throws Exception {
+        awaitResult(RefAppState.sirius.enqueuePut(key, data.getBytes()));
 
-        return Response.status(Response.Status.ACCEPTED).build();
+        return Response.status(Response.Status.OK).build();
     }
 
     /**

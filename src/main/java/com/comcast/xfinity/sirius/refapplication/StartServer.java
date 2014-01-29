@@ -51,7 +51,7 @@ public class StartServer {
         throw new IllegalArgumentException("Usage:\n StartServer [config-location]");
     }
 
-    private static void runServer(RefAppConfigurator configurator) throws IOException {
+    private static void runServer(RefAppConfigurator configurator) throws IOException, InterruptedException {
         URI baseUri = UriBuilder.fromUri("http://localhost/").port(configurator.getServerPort()).build();
 
         Map<String, String> params = new HashMap<String, String>();
@@ -62,10 +62,15 @@ public class StartServer {
         System.out.println();
         System.out.println("Server fired up, using akka over TCP. Akka address for this server:");
         System.out.println(configurator.getAkkaPath());
-        System.out.println("Hit enter to stop server...");
-        System.in.read();
-
-        thread.stopEndpoint();
+        System.out.println("Hit ctrl-c to quit.");
+        try {
+            while (true) {
+                // put the local thread to sleep, let grizzly do its thing
+                Thread.sleep(1000L);
+            }
+        } finally {
+            thread.stopEndpoint();
+        }
     }
 
     /**
