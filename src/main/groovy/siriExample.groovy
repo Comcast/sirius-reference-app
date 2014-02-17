@@ -27,6 +27,23 @@
  * Most package managers have groovy (ie brew install groovy)
  *
  * To run: groovy siriExample.groovy
+ *
+ * The script can also run multiple nodes by specifying a cluster
+ * config file. Assuming you are running on ports 2552, 2553 and 2554,
+ * create a config file that contains the following three lines:
+ *
+ *    akka.tcp://sirius-system@localhost:2552/user/sirius
+ *    akka.tcp://sirius-system@localhost:2553/user/sirius
+ *    akka.tcp://sirius-system@localhost:2554/user/sirius
+ *
+ * Then run the following in three separate terminals:
+ *
+ *    terminal1 -> groovy siriusExample.groovy /path/to/config 2552
+ *    terminal2 -> groovy siriusExample.groovy /path/to/config 2553
+ *    terminal3 -> groovy siriusExample.groovy /path/to/config 2554
+ *
+ * Pick a terminal for adding data. When running 'put' commands, you
+ * should see the data added in the other terminals as well.
  */
 @Grab(group = 'com.comcast.xfinity', module = 'sirius', version = '1.2.0-SNAPSHOT')
 @Grab(group = 'org.slf4j', module = 'slf4j-nop', version = '1.7.0')
@@ -92,17 +109,32 @@ Please enter a command:
 }
 
 SiriusConfiguration createConfig() {
-    def clusterConfig = File.createTempFile("cluster", "config")
-    clusterConfig.write("akka.tcp://sirius-2552@localhost:2552/user/sirius")
+    def clusterConfig
+    def port = 2552
+    if(args && args.length == 2) {
+        port = Integer.valueOf(args[1])
+        println "using user specified port [$port]"
+    }
+
+    if (args) {
+        clusterConfig = new File(args[0])
+        if(!clusterConfig.exists()) {
+            println "config file [$clusterConfig] does not exist"
+            System.exit(1)
+        }
+    }
+    else {
+        clusterConfig = File.createTempFile("cluster", "config")
+        clusterConfig.write("akka.tcp://sirius-system@localhost:$port/user/sirius")
+        clusterConfig.deleteOnExit()
+    }
 
     println "cluster config stored at [${clusterConfig.path}]"
-    clusterConfig.deleteOnExit()
     def siriusConfig = new SiriusConfiguration()
 
     siriusConfig.with {
         setProp(HOST(), "localhost")
-        setProp(PORT(), 2552)
-        setProp(AKKA_SYSTEM_NAME(), "sirius-2552")
+        setProp(PORT(), port)
         setProp(CLUSTER_CONFIG(), clusterConfig.path)
         setProp(LOG_LOCATION(), uberStore.path)
     }
@@ -211,9 +243,9 @@ boolean handleAdministration(String[] commandLine) {
         case "help":
             usage()
             return true
+        default:
+            return false
     }
-
-    return false
 }
 
 boolean handleData(String[] commandLine) {
@@ -276,6 +308,8 @@ boolean handleData(String[] commandLine) {
                 println "  ${it.key} -> ${it.value}"
             }
             return true
+        default:
+            return false
     }
 }
 
