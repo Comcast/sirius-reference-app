@@ -17,8 +17,6 @@
 /**
  * requires sirius project to be installed (i.e. maven install)
  *
- * For more logging uncomment slf4j-simple and comment out slf4j-nop
- *
  * Installing groovy via bash:
  *      curl -s get.gvmtool.net | bash
  *      source ~/.gvm/bin/gvm-init.sh
@@ -26,7 +24,7 @@
  *
  * Most package managers have groovy (ie brew install groovy)
  *
- * To run: groovy siriExample.groovy
+ * To run: groovy siriusShell.groovy
  *
  * The script can also run multiple nodes by specifying a cluster
  * config file. Assuming you are running on ports 2552, 2553 and 2554,
@@ -38,16 +36,19 @@
  *
  * Then run the following in three separate terminals:
  *
- *    terminal1 -> groovy siriusExample.groovy /path/to/config 2552
- *    terminal2 -> groovy siriusExample.groovy /path/to/config 2553
- *    terminal3 -> groovy siriusExample.groovy /path/to/config 2554
+ *    terminal1 -> groovy siriusShell.groovy /path/to/config 2552
+ *    terminal2 -> groovy siriusShell.groovy /path/to/config 2553
+ *    terminal3 -> groovy siriusShell.groovy /path/to/config 2554
  *
  * Pick a terminal for adding data. When running 'put' commands, you
  * should see the data added in the other terminals as well.
  */
 @Grab(group = 'com.comcast.xfinity', module = 'sirius', version = '1.2.0-SNAPSHOT')
-@Grab(group = 'org.slf4j', module = 'slf4j-nop', version = '1.7.0')
+/*
+    For more logging uncomment slf4j-simple and comment out slf4j-nop
+ */
 //@Grab(group = 'org.slf4j', module = 'slf4j-simple', version = '1.7.0')
+@Grab(group = 'org.slf4j', module = 'slf4j-nop', version = '1.7.0')
 import com.comcast.xfinity.sirius.api.*
 import com.comcast.xfinity.sirius.api.impl.*
 import java.util.concurrent.*
@@ -72,20 +73,15 @@ def handleInput() {
             Thread.sleep(200)
         }
         line = scanner.nextLine()
-        def commandLine = line.split(/\s+/)
-        boolean commandSupported
-
 
         try {
-            commandSupported = handleAdministration(commandLine) || handleData(commandLine)
-        } catch (Throwable t) {
-            t.printStackTrace()
-            println "[$line] failed to run"
-            commandSupported = true
-        }
-
-        if (!commandSupported && line) {
-            println "[$line] is not valid"
+            //skip blank lines and just print '>'
+            if (line) {
+                CliLine cliLine = parseCommandLine(line)
+                handleCli(cliLine)
+            }
+        } catch (Throwable throwable) {
+            throwable.printStackTrace()
         }
     }
 }
@@ -111,19 +107,18 @@ Please enter a command:
 SiriusConfiguration createConfig() {
     def clusterConfig
     def port = 2552
-    if(args && args.length == 2) {
+    if (args && args.length == 2) {
         port = Integer.valueOf(args[1])
         println "using user specified port [$port]"
     }
 
     if (args) {
         clusterConfig = new File(args[0])
-        if(!clusterConfig.exists()) {
+        if (!clusterConfig.exists()) {
             println "config file [$clusterConfig] does not exist"
             System.exit(1)
         }
-    }
-    else {
+    } else {
         clusterConfig = File.createTempFile("cluster", "config")
         clusterConfig.write("akka.tcp://sirius-system@localhost:$port/user/sirius")
         clusterConfig.deleteOnExit()
@@ -212,17 +207,12 @@ Sirius startSirius() {
     return siriusImpl
 }
 
+def handleCli(CliLine cliLine) {
 
-def stopSirius(SiriusImpl siriusImpl) {
-    siriusImpl.shutdown()
-    backend = null
-}
-
-boolean handleAdministration(String[] commandLine) {
-    switch (commandLine[0]) {
+    switch (cliLine.command) {
         case "exit":
             if (sirius.isOnline()) {
-                stopSirius(sirius)
+                sirius.shutdown()
             }
             System.exit(0)
         case "start":
@@ -231,86 +221,86 @@ boolean handleAdministration(String[] commandLine) {
             } else {
                 println "sirius is already online"
             }
-            return true
+            break
         case "stop":
             if (sirius.isOnline()) {
-                stopSirius(sirius)
+                sirius.shutdown()
                 println "sirius is offline"
             } else {
                 println "sirius is already offline"
             }
-            return true
+            break
         case "help":
             usage()
-            return true
-        default:
-            return false
-    }
-}
-
-boolean handleData(String[] commandLine) {
-
-    boolean isDataCommand = false
-    if (commandLine.size() > 0) {
-        isDataCommand = ["get", "put", "delete", "data"].contains(commandLine[0])
-    }
-
-    if (!isDataCommand) {
-        return false
-    }
-
-    if (!sirius.isOnline()) {
-        println "can't perform [${commandLine[0]}], sirius is not online"
-        return true
-    }
-
-    switch (commandLine[0]) {
-
+            break
         case "get":
-            if (commandLine.size() != 2) {
+            if (!cliLine.key) {
                 println "get requires a key"
                 break
             }
-            def key = commandLine[1]
-            def value = backend[key]
+            def value = backend[cliLine.key]
             if (value) {
-                println "value for [$key] is [$value]"
+                println "value for [$cliLine.key] is [$value]"
             } else {
-                println "there is no value for [$key]"
+                println "there is no value for [$cliLine.key]"
             }
 
-            return true
+            break
         case "put":
-            if (commandLine.size() != 3) {
+            if (!canDoSiriusOperation(cliLine.command)) break
+
+            if (!cliLine.key || !cliLine.value) {
                 println "put requires a key and value"
-                return true
+                break
             }
-            def key = commandLine[1]
-            def value = commandLine[2]
-            sirius.enqueuePut(key, value.bytes).get(5, TimeUnit.SECONDS)
-            return true
+            doSiriusOperation {
+                sirius.enqueuePut(cliLine.key, cliLine.value.bytes).get(5, TimeUnit.SECONDS)
+            }
+            break
         case "delete":
-            if (commandLine.size() != 2) {
+            if (!canDoSiriusOperation(cliLine.command)) break
+
+            if (!cliLine.key) {
                 println "delete requires a key"
-                return true
+                break
             }
-            def key = commandLine[1]
-            sirius.enqueueDelete(key).get(5, TimeUnit.SECONDS)
-            return true
+
+            doSiriusOperation {
+                sirius.enqueueDelete(cliLine.key).get(5, TimeUnit.SECONDS)
+            }
+            break
         case "data":
             if (!backend) {
                 println "There is no data"
-                return true
+                break
             }
 
             println "All Data:"
             backend.each {
                 println "  ${it.key} -> ${it.value}"
             }
-            return true
+            break
         default:
-            return false
+            println "[$cliLine.line] is not a valid command, type [help] " +
+                    "for usage"
     }
+}
+
+def doSiriusOperation(Closure closure) {
+    try {
+        closure.call()
+    } catch (TimeoutException e) {
+        println "sirius operation failed with a timeout, there might not be enough healthy nodes to process the " +
+                "operation"
+    }
+}
+
+def canDoSiriusOperation(String command) {
+    if (!sirius.isOnline()) {
+        println "can't perform [$command] operation, sirius is not online"
+        return false
+    }
+    return true
 }
 
 def setupUberStore() {
@@ -319,7 +309,7 @@ def setupUberStore() {
     //Sometimes this is needed on windows to release file resources so delete() will work
     System.gc()
 
-    def uberCreationFailed = "uber store creation failed"
+    def uberCreationFailed = "UberStore creation failed"
     assert uberStore.delete(): uberCreationFailed
     assert uberStore.mkdir(): uberCreationFailed
     println "uber stored at [$uberStore]"
@@ -327,7 +317,25 @@ def setupUberStore() {
     //don't want to clutter up someone's file system
     addShutdownHook {
         if (!uberStore.deleteDir()) {
-            println "WARN - Could not delete the temporary uber store at [$uberStore]"
+            println "WARN - Could not delete the temporary UberStore at [$uberStore]"
         }
     }
+}
+
+class CliLine {
+    String line
+    String command
+    String key
+    String value
+}
+
+CliLine parseCommandLine(String line) {
+    String[] splitLine = line.split(/\s+/)
+
+    def cliLine = new CliLine(line: line, command: splitLine[0])
+
+    cliLine.key = splitLine.length > 1 ? splitLine[1] : null
+    cliLine.value = splitLine.length > 2 ? splitLine[2] : null
+
+    return cliLine
 }
