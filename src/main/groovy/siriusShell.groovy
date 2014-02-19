@@ -247,7 +247,10 @@ def handleCli(CliLine cliLine) {
 
             break
         case "put":
-            if (!canDoSiriusOperation(cliLine.command)) break
+            if (!sirius.isOnline()) {
+                println "can't perform [$cliLine.command] operation, sirius is not online"
+                break
+            }
 
             if (!cliLine.key || !cliLine.value) {
                 println "put requires a key and value"
@@ -258,7 +261,10 @@ def handleCli(CliLine cliLine) {
             }
             break
         case "delete":
-            if (!canDoSiriusOperation(cliLine.command)) break
+            if (!sirius.isOnline()) {
+                println "can't perform [$cliLine.command] operation, sirius is not online"
+                break
+            }
 
             if (!cliLine.key) {
                 println "delete requires a key"
@@ -293,14 +299,6 @@ def doSiriusOperation(Closure closure) {
         println "sirius operation failed with a timeout, there might not be enough healthy nodes to process the " +
                 "operation"
     }
-}
-
-def canDoSiriusOperation(String command) {
-    if (!sirius.isOnline()) {
-        println "can't perform [$command] operation, sirius is not online"
-        return false
-    }
-    return true
 }
 
 def setupUberStore() {
