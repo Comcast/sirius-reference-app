@@ -77,8 +77,10 @@ def handleInput() {
         try {
             //skip blank lines and just print '>'
             if (line) {
-                CliLine cliLine = parseCommandLine(line)
-                handleCli(cliLine)
+                String[] commands = line.split(/\s+/)
+                String command = commands.head()
+                List<String> args = commands.tail()
+                handleCommand(command, args)
             }
         } catch (Throwable throwable) {
             throwable.printStackTrace()
@@ -207,9 +209,9 @@ Sirius startSirius() {
     return siriusImpl
 }
 
-def handleCli(CliLine cliLine) {
+def handleCommand(String command, List<String> args) {
 
-    switch (cliLine.command) {
+    switch (command) {
         case "exit":
             if (sirius.isOnline()) {
                 sirius.shutdown()
@@ -234,45 +236,45 @@ def handleCli(CliLine cliLine) {
             usage()
             break
         case "get":
-            if (!cliLine.key) {
-                println "get requires a key"
+            if (!args || args.size() != 1) {
+                println "[get] requires 1 argument, type [help] for usage"
                 break
             }
-            def value = backend[cliLine.key]
+            def value = backend[args.head()]
             if (value) {
-                println "value for [$cliLine.key] is [$value]"
+                println "value for [${args.head()}] is [$value]"
             } else {
-                println "there is no value for [$cliLine.key]"
+                println "there is no value for [${args.head()}]"
             }
 
             break
         case "put":
             if (!sirius.isOnline()) {
-                println "can't perform [$cliLine.command] operation, sirius is not online"
+                println "can't perform [$command] operation, sirius is not online"
                 break
             }
 
-            if (!cliLine.key || !cliLine.value) {
-                println "put requires a key and value"
+            if (!args || args.size() != 2) {
+                println "[put] requires 2 arguments, type [help] for usage"
                 break
             }
             doSiriusOperation {
-                sirius.enqueuePut(cliLine.key, cliLine.value.bytes).get(5, TimeUnit.SECONDS)
+                sirius.enqueuePut(args.head(), args.tail()[0].bytes).get(5, TimeUnit.SECONDS)
             }
             break
         case "delete":
             if (!sirius.isOnline()) {
-                println "can't perform [$cliLine.command] operation, sirius is not online"
+                println "can't perform [$command] operation, sirius is not online"
                 break
             }
 
-            if (!cliLine.key) {
-                println "delete requires a key"
+            if (!args || args.size() != 1) {
+                println "[delete] requires 1 argument, type [help] for usage"
                 break
             }
 
             doSiriusOperation {
-                sirius.enqueueDelete(cliLine.key).get(5, TimeUnit.SECONDS)
+                sirius.enqueueDelete(args.head()).get(5, TimeUnit.SECONDS)
             }
             break
         case "data":
@@ -287,7 +289,11 @@ def handleCli(CliLine cliLine) {
             }
             break
         default:
-            println "[$cliLine.line] is not a valid command, type [help] " +
+            String line = command
+            args.each {
+                line += " $it"
+            }
+            println "[$line] is not a valid command, type [help] " +
                     "for usage"
     }
 }
@@ -318,22 +324,4 @@ def setupUberStore() {
             println "WARN - Could not delete the temporary UberStore at [$uberStore]"
         }
     }
-}
-
-class CliLine {
-    String line
-    String command
-    String key
-    String value
-}
-
-CliLine parseCommandLine(String line) {
-    String[] splitLine = line.split(/\s+/)
-
-    def cliLine = new CliLine(line: line, command: splitLine[0])
-
-    cliLine.key = splitLine.length > 1 ? splitLine[1] : null
-    cliLine.value = splitLine.length > 2 ? splitLine[2] : null
-
-    return cliLine
 }
