@@ -2,10 +2,21 @@ The `siriusShell.groovy` script is the easiest way to get started
 with sirius. The script provides an interactive shell to
 perform crud operations against a HashMap backend.
 
+####Installing Sirius Library
+
+The sirius library needs to be installed localy for the script to work
+properly.
+
+```bash
+git clone https://github.com/Comcast/sirius.git
+cd sirius
+mvn -DskipTests install
+```
+
 ####Installing Groovy Script Example
 
-Assuming java is installed, you will need to install groovy to get the
-example to work. If you have access to bash, you can run the following
+You will need to install groovy to get the example to work. If you
+have access to bash, you can run the following
 
 ```bash
 curl -s get.gvmtool.net | bash
@@ -20,9 +31,8 @@ http://groovy.codehaus.org/Installing+Groovy
 
 Using curl is the easiest way to install the script
 
-THIS NEEDS TO BE CHANGED WHEN THE SCRIPT IS PULLED AND MOVED!
 ```
-curl https://<github user>:<password>@raw2.github.com/tbarker9comcast/sirius-reference-app/groovy-example/src/main/groovy/siriusShell.groovy > siriusShell.groovy
+curl https://<github user>:<password>@raw2.github.com/Comcast/sirius-reference-app/master/src/main/groovy/siriusShell.groovy > siriusShell.groovy
 ```
 
 ####Running a Single Node
@@ -52,9 +62,10 @@ By default the script runs on port 2552 and creates temporary
 `UberStore` and `cluster.config` files. After running some crud
 commands in the shell, run stop then start to watch sirius ingest the
 transaction log. When exit is called, the `UberStore` and
-`cluster.config` are deleted.
+`cluster.config` are deleted. `UberStore` might not delete if the
+script is run in Windows.
 
-####Running Multiple Nodes
+####Running Multiple Nodes (nix systems only)
 
 The script can accept two arguments to enable multiple nodes
 
