@@ -13,7 +13,7 @@ cd sirius
 mvn install
 ```
 
-####Installing Groovy Script Example
+####Installing Groovy
 
 You will need to install groovy to get the example to work. If you
 have access to bash, you can run the following
@@ -28,12 +28,6 @@ Most package managers include groovy (ie brew install groovy)
 
 For other installation options see
 http://groovy.codehaus.org/Installing+Groovy
-
-Using curl is the easiest way to install the script
-
-```
-curl https://<github user>:<password>@raw2.github.com/Comcast/sirius-reference-app/master/src/main/groovy/siriusShell.groovy > siriusShell.groovy
-```
 
 ####Running a Single Node
 
