@@ -10,7 +10,7 @@ properly.
 ```bash
 git clone https://github.com/Comcast/sirius.git
 cd sirius
-mvn -DskipTests install
+mvn install
 ```
 
 ####Installing Groovy Script Example
