@@ -1,11 +1,6 @@
-Sirius-Reference-App
-======
+A reference application to help developers get started with using the Sirius library
 
-A simple reference application that helps developers get started with using the Sirius library
-
-
-Basic interaction with the sample app
-======
+####Basic interaction with the sample app
 
 This section describes firing up and playing with the sample app in single-node, non-distributed
 mode. We'll describe more interesting setups later.
@@ -55,8 +50,7 @@ Available URI paths:
 |                               |                                       |                  |
 |/storage/{.+ }                 | RepositoryController                  | GET, PUT, DELETE |
 
-Sample app as a local cluster
-======
+####Running as a local cluster
 Included with the reference application is a sample config for a three node cluster, running on a single machine.
 This is a toy example, but should hopefully give you an idea of configuring nodes to talk to one another.
 
