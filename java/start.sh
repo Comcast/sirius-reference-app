@@ -14,7 +14,7 @@ CONFIG=$1; shift
 echo $CONFIG
 if [ "x" == "x$CONFIG" ] || [ ! -e $CONFIG ]; then
     echo "config does not exist, or no config specified. Example usage:"
-    echo " $ ./start.sh example/config.properties # single node setup"
+    echo " $ ./start.sh example/single-node-local/config.properties # single node setup"
     exit 1
 fi
 

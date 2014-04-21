@@ -14,7 +14,7 @@ Build and run the application. Default server port is 8000. See contents of conf
 definitions in RefAppConfigurator.java) for available parameters.
 ```
     mvn clean package
-    ./start.sh example/config.properties
+    ./start.sh example/single-node-local/config.properties
 ```
 
 Add some content:
@@ -57,18 +57,49 @@ Available URI paths:
 
 Sample app as a local cluster
 ======
-Three-node cluster, spun up on a single machine.
-TODO
+Included with the reference application is a sample config for a three node cluster, running on a single machine.
+This is a toy example, but should hopefully give you an idea of configuring nodes to talk to one another.
 
-Sample app as a remote cluster
-======
-Three-node cluster, spun up on three machines.
-TODO
+You'll need three terminal windows (or screen instances), one for each node, and a fourth to issue commands.
+```
+    mvn clean package
+    # window one
+    ./start.sh example/three-node-local/node-one/config.properties
+    # window two
+    ./start.sh example/three-node-local/node-two/config.properties
+    # window three
+    ./start.sh example/three-node-local/node-three/config.properties
+```
+
+The nodes should spin up and figure out how to talk to one another. It may take up to 30 seconds for them to find
+one another, depending on how closely you start them. Note that they share a single `cluster.config` file, located at
+```
+    example/three-node-local/cluster.config
+```
+but each have their own uberstore (after you start them up, at least), located at
+```
+    example/three-node-local/node-one/uberstore
+    example/three-node-local/node-two/uberstore
+    example/three-node-local/node-three/uberstore
+```
+Once they're up and running, you can add data to any, and see the results on any other.
+```
+    # add to first node
+    curl -vX PUT -HContent-type:text/plain --data "Six Feet Under"  http://127.0.0.1:8000/storage/series/12345
+    curl -vX PUT -HContent-type:text/plain --data "The Wire"  http://127.0.0.1:8000/storage/series/45678
+    # see keys from second
+    curl http://127.0.0.1:8001/keys
+    # delete entry from second
+    curl -vX DELETE http://127.0.0.1:8001/storage/series/45678
+    # see keys from third
+    curl http://127.0.0.1:8002/keys
+```
+
 
 Getting Started Tutorial
 ======
 
-This tutorial used code snippets from a simple application that uses the Sirius library to provide
+This tutorial uses code snippets from a simple application that uses the Sirius library to provide
 a simple distribute and consistent data store. We will first walk through the steps to write a Sirius powered application.
 
 When developing with Sirius there are four blocks that you need. A Sirius representation, some class
