@@ -1,6 +1,3 @@
-Sirius-Reference-App
-=====
-
 Included here are a couple of examples of using Sirius in an application. Each contains a more detailed README, but
 to describe them briefly:
 
