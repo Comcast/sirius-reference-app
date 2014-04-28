@@ -2,17 +2,6 @@ The `siriusShell.groovy` script is the easiest way to get started
 with sirius. The script provides an interactive shell to
 perform crud operations against a HashMap backend.
 
-####Installing Sirius Library
-
-The sirius library needs to be installed localy for the script to work
-properly.
-
-```bash
-git clone https://github.com/Comcast/sirius.git
-cd sirius
-mvn install
-```
-
 ####Installing Groovy
 
 You will need to install groovy to get the example to work. If you
