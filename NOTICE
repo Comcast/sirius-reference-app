@@ -2,3 +2,15 @@ Sirius Reference Application
 Copyright 2013 Comcast Cable Communications Management, LLC
 
 This product includes software developed at Comcast (http://www.comcast.com/).
+
+This project depends on the Jersey project,
+Copyright 2013-2014 Oracle and/or its affiliates.
+Used under the CDDL 1.1 license.
+Source code is available from:
+https://github.com/jersey/jersey
+
+This project depends on the Grizzly project,
+Copyright 2014 Oracle and/or its affiliates.
+Used under the CDDL 1.1 license.
+Source code is available from:
+https://grizzly.java.net/
