@@ -15,8 +15,6 @@
  */
 
 /**
- * requires sirius project to be installed (i.e. maven install)
- *
  * Installing groovy via bash:
  *      curl -s get.gvmtool.net | bash
  *      source ~/.gvm/bin/gvm-init.sh
