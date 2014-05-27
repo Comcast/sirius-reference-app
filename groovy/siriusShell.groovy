@@ -41,7 +41,7 @@
  * Pick a terminal for adding data. When running 'put' commands, you
  * should see the data added in the other terminals as well.
  */
-@Grab(group = 'com.comcast', module = 'sirius', version = '1.2.0')
+@Grab(group = 'com.comcast', module = 'sirius', version = '1.2.1')
 /*
     For more logging uncomment slf4j-simple and comment out slf4j-nop
  */
