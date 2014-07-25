@@ -50,7 +50,7 @@ public class RefAppConfigurator {
 
         akkaPath = new StringBuilder("")
             .append("akka.tcp://")
-            .append("sirius-system").append("@")
+            .append("sirius-2552").append("@")
             .append(siriusHostName).append(":")
             .append(siriusPort)
             .append("/user/sirius").toString();
@@ -82,10 +82,29 @@ public class RefAppConfigurator {
 
         SiriusConfiguration siriusConfig = new SiriusConfiguration();
         for (String name: properties.stringPropertyNames()) {
-            siriusConfig.setProp(name, properties.getProperty(name));
+            String value = properties.getProperty(name);
+            setProp(siriusConfig, name, value);
         }
 
         return siriusConfig;
+    }
+
+    /**
+     * Set configurations options as the most likely value, based on the param. This can go away
+     * once sirius handles all of its parameters in a more friendly manner (.getDouble, .getInt, etc).
+     */
+    private void setProp(SiriusConfiguration siriusConfig, String name, String value) {
+        try {
+            siriusConfig.setProp(name, Integer.valueOf(value));
+            return;
+        } catch (NumberFormatException ex) { }
+
+        try {
+            siriusConfig.setProp(name, Double.valueOf(value));
+            return;
+        } catch (NumberFormatException ex) { }
+
+        siriusConfig.setProp(name, value);
     }
 
 }
