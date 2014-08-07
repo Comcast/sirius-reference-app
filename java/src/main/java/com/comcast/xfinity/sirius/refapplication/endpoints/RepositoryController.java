@@ -49,8 +49,10 @@ public class RepositoryController {
     @PUT
     @Path("{key: .+}")
     public Response putEntry(@PathParam("key") String key, String data) throws Exception {
+        RefAppState.totalPuts.incrementAndGet();
         awaitResult(RefAppState.sirius.enqueuePut(key, data.getBytes()));
 
+        RefAppState.successfulPuts.incrementAndGet();
         return Response.status(Response.Status.OK).build();
     }
 
