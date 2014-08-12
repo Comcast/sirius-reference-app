@@ -22,12 +22,13 @@
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sirius.version>1.2.2</sirius.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>com.comcast</groupId>
             <artifactId>sirius</artifactId>
-            <version>1.2.1</version>
+            <version>${sirius.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
