@@ -15,6 +15,7 @@
  */
 package com.comcast.xfinity.sirius.refapplication.config;
 
+import com.comcast.xfinity.sirius.api.Sirius;
 import com.comcast.xfinity.sirius.api.SiriusConfiguration;
 import com.comcast.xfinity.sirius.api.impl.SiriusFactory;
 import com.comcast.xfinity.sirius.api.impl.SiriusImpl;
@@ -29,49 +30,34 @@ import com.comcast.xfinity.sirius.refapplication.sirius.DefaultRequestHandler;
 
 public class RefAppConfigurator {
 
-    public static final String SIRIUS_PORT_KEY = "sirius.port";
-    public static final String SIRIUS_HOSTNAME_KEY = "sirius.hostname";
-    public static final String CLUSTER_CONFIG_KEY = "cluster-config.location";
-    public static final String UBERSTORE_KEY = "uberstore.location";
     public static final String SERVER_PORT_KEY = "server.port";
 
-    private final String akkaSystemName;
     private final int serverPort;
-    private final int siriusPort;
-    private final String siriusHostName;
-    private final String clusterConfigLocation;
+    private final String akkaPath;
     private final String uberStoreLocation;
 
+    private Properties properties = new Properties();
+
     public RefAppConfigurator(String configLocation) throws IOException {
-        Properties properties = new Properties();
         properties.load(new FileInputStream(new File(configLocation)));
 
         serverPort = Integer.parseInt(properties.getProperty(SERVER_PORT_KEY));
-        siriusPort = Integer.parseInt(properties.getProperty(SIRIUS_PORT_KEY));
-        siriusHostName = properties.getProperty(SIRIUS_HOSTNAME_KEY, Inet4Address.getLocalHost().getHostAddress());
-        akkaSystemName = "sirius-" + siriusPort;
-        clusterConfigLocation = properties.getProperty(CLUSTER_CONFIG_KEY);
-        uberStoreLocation = properties.getProperty(UBERSTORE_KEY);
+        uberStoreLocation = properties.getProperty(SiriusConfiguration.LOG_LOCATION());
+
+
+        Integer siriusPort = Integer.parseInt(properties.getProperty(SiriusConfiguration.PORT()));
+        String siriusHostName = properties.getProperty(SiriusConfiguration.HOST(), Inet4Address.getLocalHost().getHostAddress());
+
+        akkaPath = new StringBuilder("")
+            .append("akka.tcp://")
+            .append("sirius-2552").append("@")
+            .append(siriusHostName).append(":")
+            .append(siriusPort)
+            .append("/user/sirius").toString();
     }
 
     public int getServerPort() {
         return serverPort;
-    }
-
-    public int getSiriusPort() {
-        return siriusPort;
-    }
-
-    public String getSiriusHostName() {
-        return siriusHostName;
-    }
-
-    public String getClusterConfigLocation() {
-        return clusterConfigLocation;
-    }
-
-    public String getUberStoreLocation() {
-        return uberStoreLocation;
     }
 
     /**
@@ -80,14 +66,7 @@ public class RefAppConfigurator {
      * @return akka path of this sirius node
      */
     public String getAkkaPath() {
-        StringBuilder builder = new StringBuilder("");
-        builder.append("akka.tcp://");
-        builder.append(akkaSystemName).append("@");
-        builder.append(siriusHostName).append(":");
-        builder.append(siriusPort);
-        builder.append("/user/sirius");
-
-        return builder.toString();
+        return akkaPath;
     }
 
     /**
@@ -102,13 +81,30 @@ public class RefAppConfigurator {
         }
 
         SiriusConfiguration siriusConfig = new SiriusConfiguration();
-        siriusConfig.setProp(SiriusConfiguration.HOST(), siriusHostName);
-        siriusConfig.setProp(SiriusConfiguration.PORT(), siriusPort);
-        siriusConfig.setProp(SiriusConfiguration.AKKA_SYSTEM_NAME(), akkaSystemName);
-        siriusConfig.setProp(SiriusConfiguration.CLUSTER_CONFIG(), clusterConfigLocation);
-        siriusConfig.setProp(SiriusConfiguration.LOG_LOCATION(), uberStoreLocation);
+        for (String name: properties.stringPropertyNames()) {
+            String value = properties.getProperty(name);
+            setProp(siriusConfig, name, value);
+        }
 
         return siriusConfig;
+    }
+
+    /**
+     * Set configurations options as the most likely value, based on the param. This can go away
+     * once sirius handles all of its parameters in a more friendly manner (.getDouble, .getInt, etc).
+     */
+    private void setProp(SiriusConfiguration siriusConfig, String name, String value) {
+        try {
+            siriusConfig.setProp(name, Integer.valueOf(value));
+            return;
+        } catch (NumberFormatException ex) { }
+
+        try {
+            siriusConfig.setProp(name, Double.valueOf(value));
+            return;
+        } catch (NumberFormatException ex) { }
+
+        siriusConfig.setProp(name, value);
     }
 
 }
