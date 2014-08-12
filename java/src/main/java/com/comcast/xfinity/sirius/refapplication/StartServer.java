@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class StartServer {
 
@@ -40,6 +41,8 @@ public class StartServer {
 
         RefAppState.repository = new KVRepository();
         RefAppState.sirius = startSirius(configurator);
+        RefAppState.successfulPuts = new AtomicLong();
+        RefAppState.totalPuts = new AtomicLong();
 
         runServer(configurator);
 
