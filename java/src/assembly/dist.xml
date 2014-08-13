@@ -12,6 +12,7 @@
             <outputDirectory>target</outputDirectory>
             <includes>
                 <include>classes/**/*.class</include>
+                <include>dependency/*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -30,13 +31,4 @@
             </includes>
         </fileSet>
     </fileSets>
-    <dependencySets>
-        <dependencySet>
-            <useProjectArtifact>true</useProjectArtifact>
-            <outputDirectory>target/dependency</outputDirectory>
-            <useTransitiveDependencies>true</useTransitiveDependencies>
-            <unpack>false</unpack>
-            <scope>runtime</scope>
-        </dependencySet>
-    </dependencySets>
 </assembly>
